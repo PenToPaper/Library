@@ -32,4 +32,24 @@ class BookController extends Controller
 
         return response()->json(['message' => 'Book deleted successfully']);
     }
+
+    public function update(Request $request, Book $book)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'author' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'cover_image' => 'nullable|url',
+            'publisher' => 'nullable|string|max:255',
+            'publication_date' => 'nullable|date',
+            'category' => 'nullable|string|max:255',
+            'isbn' => 'nullable|string|max:13',
+            'page_count' => 'nullable|integer|min:1',
+        ]);
+
+        // Update the book
+        $book->update($validatedData);
+
+        return response()->json(['message' => 'Book updated successfully', 'book' => $book]);
+    }
 }

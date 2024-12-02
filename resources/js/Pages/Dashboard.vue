@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { AgGridVue } from 'ag-grid-vue3';
 import Modal from '@/Components/Modal.vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Book } from '@/types/book';
-import { ICellRendererParams, GridApi } from 'ag-grid-community';
+import { Head } from '@inertiajs/vue3';
+import { GridApi, ICellRendererParams } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { AgGridVue } from 'ag-grid-vue3';
+import { onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     userRole: string;
 }>();
-
 
 const books = ref<Book[]>([]);
 
@@ -29,10 +28,10 @@ const fetchBooks = async () => {
 const selectedBook = ref<Book | null>(null);
 const searchQuery = ref('');
 const gridApi = ref<GridApi | null>(null);
-const newBook = ref<Book | null>(null);
+const addEditBook = ref<Book | null>(null);
 
-const openNewBookModal = () => {
-    newBook.value = {
+const openAddEditBookModal = (
+    book: Book = {
         id: 0,
         title: '',
         author: '',
@@ -45,13 +44,14 @@ const openNewBookModal = () => {
         page_count: 0,
         created_at: '',
         updated_at: '',
-    }
+    },
+) => {
+    addEditBook.value = book;
 };
 
-const closeNewBookModal = () => {
-    newBook.value = null;
+const closeAddEditBookModal = () => {
+    addEditBook.value = null;
 };
-
 
 const openModal = (book: Book) => {
     selectedBook.value = book;
@@ -99,6 +99,24 @@ const columnDefs = ref([
 ]);
 
 if (props.userRole === 'librarian') {
+    // Edit column
+    columnDefs.value.push({
+        headerName: 'Edit',
+        cellRenderer: (params: ICellRendererParams) => {
+            const button = document.createElement('button');
+            button.innerHTML = '✏️';
+            button.className =
+                'bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600';
+            button.addEventListener('click', () => {
+                openAddEditBookModal(params.data);
+            });
+            return button;
+        },
+        sortable: false,
+        filter: false,
+    });
+
+    // Delete column
     columnDefs.value.push({
         headerName: 'Delete',
         cellRenderer: (params: ICellRendererParams) => {
@@ -140,7 +158,7 @@ const submitNewBook = async () => {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': getCSRFToken(),
             },
-            body: JSON.stringify(newBook.value),
+            body: JSON.stringify(addEditBook.value),
         });
 
         if (!response.ok) {
@@ -150,9 +168,34 @@ const submitNewBook = async () => {
         }
 
         await fetchBooks();
-        closeNewBookModal();
+        closeAddEditBookModal();
     } catch (error) {
         console.error('Failed to submit new book:', error);
+    }
+};
+
+const editBook = async () => {
+    console.log("EDIT BOOK");
+    try {
+        const response = await fetch(`/books/${addEditBook.value!.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCSRFToken(),
+            },
+            body: JSON.stringify(addEditBook.value),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Validation errors:', errorData.errors);
+            return;
+        }
+
+        await fetchBooks();
+        closeAddEditBookModal();
+    } catch (error) {
+        console.error('Failed to edit book:', error);
     }
 };
 
@@ -179,6 +222,13 @@ const deleteBook = async (bookId: number) => {
     }
 };
 
+const onAddEditBook = () => {
+    if (addEditBook.value!.id === 0) {
+        submitNewBook();
+    } else {
+        editBook();
+    }
+};
 
 onMounted(() => {
     fetchBooks();
@@ -195,7 +245,10 @@ onMounted(() => {
             </h2>
 
             <div v-if="props.userRole === 'librarian'">
-                <button class="bg-green-500 text-white px-4 py-2 rounded" @click="openNewBookModal">
+                <button
+                    class="rounded bg-green-500 px-4 py-2 text-white"
+                    @click="openAddEditBookModal"
+                >
                     Add Book
                 </button>
             </div>
@@ -206,7 +259,7 @@ onMounted(() => {
                     type="text"
                     v-model="searchQuery"
                     placeholder="Search books..."
-                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+                    class="w-full rounded-md border px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                 />
             </div>
 
@@ -235,12 +288,20 @@ onMounted(() => {
                     class="mb-4 w-full rounded-md"
                 />
                 <p><strong>Author:</strong> {{ selectedBook?.author }}</p>
-                <p><strong>Description:</strong> {{ selectedBook?.description }}</p>
+                <p>
+                    <strong>Description:</strong>
+                    {{ selectedBook?.description }}
+                </p>
                 <p><strong>Publisher:</strong> {{ selectedBook?.publisher }}</p>
-                <p><strong>Publication Date:</strong> {{ selectedBook?.publication_date }}</p>
+                <p>
+                    <strong>Publication Date:</strong>
+                    {{ selectedBook?.publication_date }}
+                </p>
                 <p><strong>Category:</strong> {{ selectedBook?.category }}</p>
                 <p><strong>ISBN:</strong> {{ selectedBook?.isbn }}</p>
-                <p><strong>Page Count:</strong> {{ selectedBook?.page_count }}</p>
+                <p>
+                    <strong>Page Count:</strong> {{ selectedBook?.page_count }}
+                </p>
                 <button
                     @click="closeModal"
                     class="rounded-md bg-gray-300 px-4 py-2"
@@ -249,99 +310,99 @@ onMounted(() => {
                 </button>
             </Modal>
 
-            <!-- New Book Modal -->
-            <Modal :show="newBook !== null" @close="closeNewBookModal">
+            <!-- Add/Edit Book Modal -->
+            <Modal :show="addEditBook !== null" @close="closeAddEditBookModal">
                 <h3 class="text-lg font-semibold">Add New Book</h3>
-                <form @submit.prevent="submitNewBook">
+                <form @submit.prevent="onAddEditBook">
                     <!-- Title -->
                     <div class="mb-4">
-                        <label class="block mb-1">Title</label>
+                        <label class="mb-1 block">Title</label>
                         <input
-                            v-model="newBook!.title"
+                            v-model="addEditBook!.title"
                             type="text"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                             required
                         />
                     </div>
 
                     <!-- Author -->
                     <div class="mb-4">
-                        <label class="block mb-1">Author</label>
+                        <label class="mb-1 block">Author</label>
                         <input
-                            v-model="newBook!.author"
+                            v-model="addEditBook!.author"
                             type="text"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                             required
                         />
                     </div>
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <label class="block mb-1">Description</label>
+                        <label class="mb-1 block">Description</label>
                         <textarea
-                            v-model="newBook!.description"
-                            class="w-full px-4 py-2 border rounded-md"
+                            v-model="addEditBook!.description"
+                            class="w-full rounded-md border px-4 py-2"
                             rows="4"
                         ></textarea>
                     </div>
 
                     <!-- Cover Image -->
                     <div class="mb-4">
-                        <label class="block mb-1">Cover Image (URL)</label>
+                        <label class="mb-1 block">Cover Image (URL)</label>
                         <input
-                            v-model="newBook!.cover_image"
+                            v-model="addEditBook!.cover_image"
                             type="url"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                         />
                     </div>
 
                     <!-- Publisher -->
                     <div class="mb-4">
-                        <label class="block mb-1">Publisher</label>
+                        <label class="mb-1 block">Publisher</label>
                         <input
-                            v-model="newBook!.publisher"
+                            v-model="addEditBook!.publisher"
                             type="text"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                         />
                     </div>
 
                     <!-- Publication Date -->
                     <div class="mb-4">
-                        <label class="block mb-1">Publication Date</label>
+                        <label class="mb-1 block">Publication Date</label>
                         <input
-                            v-model="newBook!.publication_date"
+                            v-model="addEditBook!.publication_date"
                             type="date"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                         />
                     </div>
 
                     <!-- Category -->
                     <div class="mb-4">
-                        <label class="block mb-1">Category</label>
+                        <label class="mb-1 block">Category</label>
                         <input
-                            v-model="newBook!.category"
+                            v-model="addEditBook!.category"
                             type="text"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                         />
                     </div>
 
                     <!-- ISBN -->
                     <div class="mb-4">
-                        <label class="block mb-1">ISBN</label>
+                        <label class="mb-1 block">ISBN</label>
                         <input
-                            v-model="newBook!.isbn"
+                            v-model="addEditBook!.isbn"
                             type="text"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                         />
                     </div>
 
                     <!-- Page Count -->
                     <div class="mb-4">
-                        <label class="block mb-1">Page Count</label>
+                        <label class="mb-1 block">Page Count</label>
                         <input
-                            v-model="newBook!.page_count"
+                            v-model="addEditBook!.page_count"
                             type="number"
-                            class="w-full px-4 py-2 border rounded-md"
+                            class="w-full rounded-md border px-4 py-2"
                             min="1"
                         />
                     </div>
@@ -350,14 +411,13 @@ onMounted(() => {
                     <div class="mt-4">
                         <button
                             type="submit"
-                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                            class="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
                         >
                             Save Book
                         </button>
                     </div>
                 </form>
             </Modal>
-
         </div>
     </AuthenticatedLayout>
 </template>

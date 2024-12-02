@@ -15,4 +15,9 @@ class BookPolicy
     {
         return $user->role === 'librarian';
     }
+
+    public function update(User $user): bool
+    {
+        return $user->role === 'librarian';
+    }
 }
