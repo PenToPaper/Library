@@ -33,6 +33,7 @@ Route::get('/books', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/books', [BookController::class, 'store'])->middleware('can:create,App\Models\Book');
+    Route::delete('/books/{book}', [BookController::class, 'destroy'])->middleware('can:delete,App\Models\Book');
 });
 
 require __DIR__.'/auth.php';

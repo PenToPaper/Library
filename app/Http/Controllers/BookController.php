@@ -25,4 +25,11 @@ class BookController extends Controller
 
         return response()->json(['message' => 'Book added successfully', 'book' => $book], 201);
     }
+
+    public function destroy(Book $book)
+    {
+        $book->delete();
+
+        return response()->json(['message' => 'Book deleted successfully']);
+    }
 }

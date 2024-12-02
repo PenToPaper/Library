@@ -10,4 +10,9 @@ class BookPolicy
     {
         return $user->role === 'librarian';
     }
+
+    public function delete(User $user): bool
+    {
+        return $user->role === 'librarian';
+    }
 }

@@ -9,9 +9,10 @@ import { ICellRendererParams, GridApi } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
-defineProps<{
+const props = defineProps<{
     userRole: string;
 }>();
+
 
 const books = ref<Book[]>([]);
 
@@ -97,10 +98,38 @@ const columnDefs = ref([
     },
 ]);
 
+if (props.userRole === 'librarian') {
+    columnDefs.value.push({
+        headerName: 'Delete',
+        cellRenderer: (params: ICellRendererParams) => {
+            const button = document.createElement('button');
+            button.innerHTML = '🗑️';
+            button.className =
+                'bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600';
+            button.addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete this book?')) {
+                    deleteBook(params.data.id);
+                }
+            });
+            return button;
+        },
+        sortable: false,
+        filter: false,
+    });
+}
+
 const gridOptions = {
     onGridReady: (params: any) => {
         gridApi.value = params.api;
     },
+};
+
+const getCSRFToken = () => {
+    return (
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute('content') || ''
+    );
 };
 
 const submitNewBook = async () => {
@@ -109,9 +138,7 @@ const submitNewBook = async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': getCSRFToken(),
             },
             body: JSON.stringify(newBook.value),
         });
@@ -129,6 +156,30 @@ const submitNewBook = async () => {
     }
 };
 
+const deleteBook = async (bookId: number) => {
+    try {
+        const response = await fetch(`/books/${bookId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Failed to delete book:', errorData);
+            return;
+        }
+
+        console.log('Book deleted successfully');
+        await fetchBooks(); // Refresh the book list
+    } catch (error) {
+        console.error('Error deleting book:', error);
+    }
+};
+
+
 onMounted(() => {
     fetchBooks();
 });
@@ -143,7 +194,7 @@ onMounted(() => {
                 Library
             </h2>
 
-            <div v-if="userRole === 'librarian'">
+            <div v-if="props.userRole === 'librarian'">
                 <button class="bg-green-500 text-white px-4 py-2 rounded" @click="openNewBookModal">
                     Add Book
                 </button>
