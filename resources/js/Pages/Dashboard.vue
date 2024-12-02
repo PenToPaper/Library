@@ -5,7 +5,7 @@ import { Head } from '@inertiajs/vue3';
 import { AgGridVue } from 'ag-grid-vue3';
 import Modal from '@/Components/Modal.vue';
 import { Book } from '@/types/book';
-import { ICellRendererParams } from 'ag-grid-community';
+import { ICellRendererParams, GridApi } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
@@ -22,6 +22,8 @@ const fetchBooks = async () => {
 };
 
 const selectedBook = ref<Book | null>(null);
+const searchQuery = ref('');
+const gridApi = ref<GridApi | null>(null);
 
 const openModal = (book: Book) => {
     selectedBook.value = book;
@@ -30,6 +32,13 @@ const openModal = (book: Book) => {
 const closeModal = () => {
     selectedBook.value = null;
 };
+
+// Hook into gridApi filter
+watch(searchQuery, (newValue) => {
+    if (gridApi.value) {
+        gridApi.value.setGridOption('quickFilterText', newValue);
+    }
+});
 
 // Column definitions for ag-Grid
 const columnDefs = ref([
@@ -61,15 +70,16 @@ const columnDefs = ref([
     },
 ]);
 
-watch(selectedBook, (newVal) => {
-    console.log('Selected Book:', newVal); // Debugging
-});
+const gridOptions = {
+    onGridReady: (params: any) => {
+        gridApi.value = params.api;
+    },
+};
 
 onMounted(() => {
     fetchBooks();
 });
 </script>
-
 
 <template>
     <AuthenticatedLayout>
@@ -80,6 +90,16 @@ onMounted(() => {
                 Library
             </h2>
 
+            <!-- Quick Search -->
+            <div class="mb-4">
+                <input
+                    type="text"
+                    v-model="searchQuery"
+                    placeholder="Search books..."
+                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+                />
+            </div>
+
             <!-- Book Table -->
             <div
                 class="ag-theme-alpine my-4"
@@ -89,6 +109,7 @@ onMounted(() => {
                     class="ag-theme-alpine"
                     :rowData="books"
                     :columnDefs="columnDefs"
+                    :gridOptions="gridOptions"
                     domLayout="autoHeight"
                 />
             </div>
@@ -120,4 +141,3 @@ onMounted(() => {
         </div>
     </AuthenticatedLayout>
 </template>
-
