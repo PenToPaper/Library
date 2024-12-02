@@ -9,6 +9,10 @@ import { ICellRendererParams, GridApi } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
+defineProps<{
+    userRole: string;
+}>();
+
 const books = ref<Book[]>([]);
 
 const fetchBooks = async () => {
@@ -24,6 +28,29 @@ const fetchBooks = async () => {
 const selectedBook = ref<Book | null>(null);
 const searchQuery = ref('');
 const gridApi = ref<GridApi | null>(null);
+const newBook = ref<Book | null>(null);
+
+const openNewBookModal = () => {
+    newBook.value = {
+        id: 0,
+        title: '',
+        author: '',
+        description: '',
+        cover_image: '',
+        publisher: '',
+        publication_date: '',
+        category: '',
+        isbn: '',
+        page_count: 0,
+        created_at: '',
+        updated_at: '',
+    }
+};
+
+const closeNewBookModal = () => {
+    newBook.value = null;
+};
+
 
 const openModal = (book: Book) => {
     selectedBook.value = book;
@@ -76,6 +103,32 @@ const gridOptions = {
     },
 };
 
+const submitNewBook = async () => {
+    try {
+        const response = await fetch('/books', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute('content') || '',
+            },
+            body: JSON.stringify(newBook.value),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Validation errors:', errorData.errors);
+            return;
+        }
+
+        await fetchBooks();
+        closeNewBookModal();
+    } catch (error) {
+        console.error('Failed to submit new book:', error);
+    }
+};
+
 onMounted(() => {
     fetchBooks();
 });
@@ -89,6 +142,12 @@ onMounted(() => {
             <h2 class="text-xl font-semibold leading-tight text-gray-100">
                 Library
             </h2>
+
+            <div v-if="userRole === 'librarian'">
+                <button class="bg-green-500 text-white px-4 py-2 rounded" @click="openNewBookModal">
+                    Add Book
+                </button>
+            </div>
 
             <!-- Quick Search -->
             <div class="mb-4">
@@ -138,6 +197,116 @@ onMounted(() => {
                     Close
                 </button>
             </Modal>
+
+            <!-- New Book Modal -->
+            <Modal :show="newBook !== null" @close="closeNewBookModal">
+                <h3 class="text-lg font-semibold">Add New Book</h3>
+                <form @submit.prevent="submitNewBook">
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Title</label>
+                        <input
+                            v-model="newBook!.title"
+                            type="text"
+                            class="w-full px-4 py-2 border rounded-md"
+                            required
+                        />
+                    </div>
+
+                    <!-- Author -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Author</label>
+                        <input
+                            v-model="newBook!.author"
+                            type="text"
+                            class="w-full px-4 py-2 border rounded-md"
+                            required
+                        />
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Description</label>
+                        <textarea
+                            v-model="newBook!.description"
+                            class="w-full px-4 py-2 border rounded-md"
+                            rows="4"
+                        ></textarea>
+                    </div>
+
+                    <!-- Cover Image -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Cover Image (URL)</label>
+                        <input
+                            v-model="newBook!.cover_image"
+                            type="url"
+                            class="w-full px-4 py-2 border rounded-md"
+                        />
+                    </div>
+
+                    <!-- Publisher -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Publisher</label>
+                        <input
+                            v-model="newBook!.publisher"
+                            type="text"
+                            class="w-full px-4 py-2 border rounded-md"
+                        />
+                    </div>
+
+                    <!-- Publication Date -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Publication Date</label>
+                        <input
+                            v-model="newBook!.publication_date"
+                            type="date"
+                            class="w-full px-4 py-2 border rounded-md"
+                        />
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Category</label>
+                        <input
+                            v-model="newBook!.category"
+                            type="text"
+                            class="w-full px-4 py-2 border rounded-md"
+                        />
+                    </div>
+
+                    <!-- ISBN -->
+                    <div class="mb-4">
+                        <label class="block mb-1">ISBN</label>
+                        <input
+                            v-model="newBook!.isbn"
+                            type="text"
+                            class="w-full px-4 py-2 border rounded-md"
+                        />
+                    </div>
+
+                    <!-- Page Count -->
+                    <div class="mb-4">
+                        <label class="block mb-1">Page Count</label>
+                        <input
+                            v-model="newBook!.page_count"
+                            type="number"
+                            class="w-full px-4 py-2 border rounded-md"
+                            min="1"
+                        />
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-4">
+                        <button
+                            type="submit"
+                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                        >
+                            Save Book
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
         </div>
     </AuthenticatedLayout>
 </template>
