@@ -52,4 +52,14 @@ class BookController extends Controller
 
         return response()->json(['message' => 'Book updated successfully', 'book' => $book]);
     }
+
+    public function index()
+    {
+        $books = Book::query()
+            ->select('books.*')
+            ->selectRaw('NOT EXISTS (SELECT 1 FROM borrows WHERE borrows.book_id = books.id AND borrows.is_returned = 0) as is_available')
+            ->get();
+
+        return response()->json($books);
+    }
 }

@@ -6,18 +6,23 @@ use App\Models\User;
 
 class BookPolicy
 {
-    public function create(User $user): bool
+    private function isLibrarian(User $user): bool
     {
         return $user->role === 'librarian';
+    }
+
+    public function create(User $user): bool
+    {
+        return $this->isLibrarian($user);
     }
 
     public function delete(User $user): bool
     {
-        return $user->role === 'librarian';
+        return $this->isLibrarian($user);
     }
 
     public function update(User $user): bool
     {
-        return $user->role === 'librarian';
+        return $this->isLibrarian($user);
     }
 }

@@ -11,4 +11,5 @@ export interface Book {
     page_count: number;
     created_at: string;
     updated_at: string;
+    is_available: boolean;
 }

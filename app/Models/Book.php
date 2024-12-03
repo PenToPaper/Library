@@ -9,7 +9,6 @@ class Book extends Model
 {
     use HasFactory;
 
-    // Define fillable properties to allow mass assignment
     protected $fillable = [
         'title',
         'author',
@@ -21,4 +20,9 @@ class Book extends Model
         'isbn',
         'page_count',
     ];
+
+    public function borrows()
+    {
+        return $this->hasMany(Borrow::class);
+    }
 }
