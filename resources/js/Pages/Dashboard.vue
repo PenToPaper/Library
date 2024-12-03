@@ -8,6 +8,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { AgGridVue } from 'ag-grid-vue3';
 import { onMounted, ref, watch } from 'vue';
+import { ColumnDefFactory } from 'ag-grid-community/dist/types/core/columns/columnDefFactory';
 
 const props = defineProps<{
     userRole: string;
@@ -31,6 +32,62 @@ const searchQuery = ref('');
 const gridApi = ref<GridApi | null>(null);
 const addEditBook = ref<Book | null>(null);
 
+const reviewBook = ref<Book | null>(null);
+const reviewData = ref({
+    rating: 0,
+    message: '',
+    id: 0,
+});
+
+const openReviewModal = (book: Book) => {
+    reviewBook.value = book;
+    if (book.reviews.length) {
+        reviewData.value = {
+            rating: book.reviews[0].rating,
+            message: book.reviews[0].message,
+            id: book.reviews[0].id,
+        };
+    } else {
+        reviewData.value = { rating: 0, message: '', id: 0 };
+    }
+};
+
+const closeReviewModal = () => {
+    reviewBook.value = null;
+};
+
+const submitReview = async () => {
+    try {
+        const method = reviewData.value.id ? 'PUT' : 'POST';
+        const url = reviewData.value.id ? `/review/${reviewData.value.id}` : '/review';
+
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCSRFToken(),
+            },
+            body: JSON.stringify({
+                book_id: reviewBook.value?.id,
+                ...reviewData.value,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error(`Error ${method === 'POST' ? 'creating' : 'updating'} review:`, errorData);
+            return;
+        }
+
+        console.log(`Review ${method === 'POST' ? 'created' : 'updated'} successfully`);
+        closeReviewModal();
+        await fetchBooks();
+    } catch (error) {
+        console.error('Failed to submit review:', error);
+    }
+};
+
+
 const openAddEditBookModal = (
     book: Book = {
         id: 0,
@@ -46,6 +103,9 @@ const openAddEditBookModal = (
         created_at: '',
         updated_at: '',
         is_available: true,
+        average_rating: null,
+        review_count: 0,
+        reviews: [],
     },
 ) => {
     addEditBook.value = book;
@@ -71,7 +131,7 @@ watch(searchQuery, (newValue) => {
 });
 
 // Column definitions for ag-Grid
-const columnDefs = ref([
+const columnDefs = ref<ColumnDefFactory>([
     {
         headerName: 'Cover',
         field: 'cover_image',
@@ -88,6 +148,18 @@ const columnDefs = ref([
         field: 'is_available',
         cellRenderer: (params: ICellRendererParams) => {
             return params.value ? 'Yes' : 'No';
+        },
+        sortable: true,
+        filter: true,
+    },
+    {
+        headerName: 'Reviews',
+        cellRenderer: (params: ICellRendererParams) => {
+            const average = params.data.average_rating;
+            const count = params.data.review_count;
+            return average !== null
+                ? `${average.toFixed(1)} (${count})`
+                : 'No Reviews';
         },
         sortable: true,
         filter: true,
@@ -146,6 +218,111 @@ if (props.userRole === 'librarian') {
         filter: false,
     });
 }
+
+if (props.userRole === 'customer') {
+    columnDefs.value.push({
+        headerName: 'Add Review',
+        cellRenderer: (params: ICellRendererParams) => {
+            const button = document.createElement('button');
+            button.innerText = 'Add Review';
+            button.className =
+                'bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600';
+            button.addEventListener('click', () => {
+                openReviewModal(params.data);
+            });
+            return button;
+        },
+        sortable: false,
+        filter: false,
+    });
+
+    columnDefs.value.push({
+        headerName: 'Your Rating',
+        field: 'reviews',
+        cellRenderer: (params: ICellRendererParams) => {
+            const reviews = params.data.reviews || [];
+            const userReview = reviews.length > 0 ? reviews[0] : null;
+            return userReview ? `Rating: ${userReview.rating}` : 'Not Rated';
+        },
+        sortable: false,
+        filter: false,
+        width: 150,
+    });
+
+    columnDefs.value.push({
+        headerName: 'Edit Rating',
+        field: 'reviews',
+        cellRenderer: (params: ICellRendererParams) => {
+            const reviews = params.data.reviews || [];
+            const userReview = reviews.length > 0 ? reviews[0] : null;
+            if (userReview) {
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.className = 'bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600';
+                editButton.addEventListener('click', () => {
+                    openReviewModal(params.data);
+                });
+                return editButton;
+            }
+            return '';
+        },
+        sortable: false,
+        filter: false,
+        width: 150,
+    });
+
+    columnDefs.value.push({
+        headerName: 'Delete Rating',
+        field: 'reviews',
+        cellRenderer: (params: ICellRendererParams) => {
+            const reviews = params.data.reviews || [];
+            const userReview = reviews.length > 0 ? reviews[0] : null;
+            if (userReview) {
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.className = 'bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600';
+                deleteButton.addEventListener('click', async () => {
+                    if (confirm('Are you sure you want to delete this review?')) {
+                        await deleteReview(userReview.id);
+                    }
+                });
+                return deleteButton;
+            }
+            return '';
+        },
+        sortable: false,
+        filter: false,
+        width: 150,
+    });
+}
+
+const deleteReview = async (reviewId: number) => {
+    try {
+        const response = await fetch(`/review/${reviewId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCSRFToken(),
+            },
+            body: JSON.stringify({
+                id: reviewId,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error deleting review:', errorData);
+            return;
+        }
+
+        console.log('Review deleted successfully');
+        await fetchBooks();
+        closeReviewModal();
+    } catch (error) {
+        console.error('Failed to delete review:', error);
+    }
+};
+
 
 const gridOptions = {
     onGridReady: (params: any) => {
@@ -479,6 +656,48 @@ onMounted(() => {
                             class="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
                         >
                             Save Book
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            <!-- Add Review Modal -->
+            <Modal :show="reviewBook !== null" @close="closeReviewModal">
+                <h3 class="text-lg font-semibold">
+                    Add Review for {{ reviewBook?.title }}
+                </h3>
+                <form @submit.prevent="submitReview">
+                    <!-- Rating -->
+                    <div class="mb-4">
+                        <label class="mb-1 block">Rating (1-5)</label>
+                        <input
+                            v-model.number="reviewData.rating"
+                            type="number"
+                            min="1"
+                            max="5"
+                            class="w-full rounded-md border px-4 py-2"
+                            required
+                        />
+                    </div>
+
+                    <!-- Message -->
+                    <div class="mb-4">
+                        <label class="mb-1 block">Review Message</label>
+                        <textarea
+                            v-model="reviewData.message"
+                            class="w-full rounded-md border px-4 py-2"
+                            rows="4"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-4">
+                        <button
+                            type="submit"
+                            class="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+                        >
+                            Submit Review
                         </button>
                     </div>
                 </form>

@@ -4,6 +4,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\BorrowController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewController;
 use App\Models\Book;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/borrow', [BorrowController::class, 'store']);
     Route::put('/borrow/return', [BorrowController::class, 'markReturned'])->middleware('can:markReturned,App\Models\Borrow');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/review', [ReviewController::class, 'store'])->middleware('can:create,App\Models\Review');
+    Route::put('/review/{review}', [ReviewController::class, 'update'])->middleware('can:update,review');
+    Route::delete('/review/{review}', [ReviewController::class, 'destroy'])->middleware('can:destroy,review');
 });
 
 require __DIR__.'/auth.php';

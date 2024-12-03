@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BookController extends Controller
 {
@@ -55,9 +57,24 @@ class BookController extends Controller
 
     public function index()
     {
+        $userId = Auth::id();
+
         $books = Book::query()
             ->select('books.*')
             ->selectRaw('NOT EXISTS (SELECT 1 FROM borrows WHERE borrows.book_id = books.id AND borrows.is_returned = 0) as is_available')
+            ->withCount([
+                'reviews as average_rating' => function ($query) {
+                    $query->select(DB::raw('avg(rating)'));
+                },
+                'reviews as review_count' => function ($query) {
+                    $query->select(DB::raw('count(rating)'));
+                },
+            ])
+            ->with([
+                'reviews' => function ($query) use ($userId) {
+                    return $query->where('user_id', $userId);
+                },
+            ])
             ->get();
 
         return response()->json($books);
