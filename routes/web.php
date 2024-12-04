@@ -2,8 +2,7 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\BorrowController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\ReviewController;
 use App\Models\Book;
 use Illuminate\Foundation\Application;
@@ -19,9 +18,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
+Route::get('/library', [LibraryController::class, 'index'])
     ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+    ->name('library');
 
 Route::get('/books', function () {
     return Book::all();

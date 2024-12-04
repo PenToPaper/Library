@@ -21,10 +21,10 @@ const props = defineProps<{
             <nav>
                 <Link
                     v-if="$page.props.auth.user"
-                    :href="route('dashboard')"
+                    :href="route('library')"
                     class="px-4 text-gray-800 hover:text-gray-600"
                 >
-                    Dashboard
+                    Library
                 </Link>
                 <template v-else>
                     <Link

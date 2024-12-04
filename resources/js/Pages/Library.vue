@@ -149,7 +149,7 @@ onMounted(async () => {
 
 <template>
     <AuthenticatedLayout>
-        <Head title="Dashboard" />
+        <Head title="Library" />
 
         <div class="p-6">
             <h2 class="mb-5 text-xl font-semibold leading-tight text-gray-900">
