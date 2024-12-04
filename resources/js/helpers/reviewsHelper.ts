@@ -33,7 +33,10 @@ export const insertReview = async (review: Review) => {
                 'X-CSRF-TOKEN': getCSRFToken(),
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(review),
+            body: JSON.stringify({
+                message: review.message,
+                rating: review.rating,
+            }),
         });
 
         if (!response.ok) {

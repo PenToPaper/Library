@@ -38,16 +38,15 @@ const showingNavigationDropdown = ref(false);
                             </div>
                         </div>
 
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center">
+                        <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                             <!-- Log Out Button -->
-                            <form :action="route('logout')" method="post">
-                                <button
-                                    type="submit"
-                                    class="inline-flex items-center rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                                >
-                                    Log Out
-                                </button>
-                            </form>
+                            <NavLink
+                                :href="route('logout')"
+                                method="post"
+                                as="button"
+                            >
+                                Log Out
+                            </NavLink>
                         </div>
 
                         <!-- Hamburger -->

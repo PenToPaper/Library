@@ -17,6 +17,7 @@ import { Book } from '@/types/book';
 import { Review } from '@/types/review';
 import { Head } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
+import TextInput from '@/Components/TextInput.vue';
 
 const props = defineProps<{
     userRole: string;
@@ -132,6 +133,7 @@ const closeBookDetailsModal = () => {
 const onMarkBookReturned = async (book: Book) => {
     if (await markBookReturned(book)) {
         closeBookDetailsModal();
+        await getAllBooks();
     }
 };
 
@@ -167,11 +169,11 @@ onMounted(async () => {
 
             <!-- Quick Search -->
             <div class="mb-4">
-                <input
+                <TextInput
                     type="text"
                     v-model="searchQuery"
                     placeholder="Search books..."
-                    class="w-full rounded-md border px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                    class="w-full"
                 />
             </div>
 
