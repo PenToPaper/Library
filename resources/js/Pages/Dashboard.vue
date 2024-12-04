@@ -142,8 +142,8 @@ const onCheckOutBook = async (book: Book) => {
     }
 };
 
-onMounted(() => {
-    getAllBooks();
+onMounted(async () => {
+    books.value = await getAllBooks();
 });
 </script>
 
