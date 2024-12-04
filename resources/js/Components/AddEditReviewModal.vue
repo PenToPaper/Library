@@ -41,9 +41,9 @@ const onSubmit = () => {
 
 <template>
     <Modal :show="props.book !== null" @close="emits('close')">
-        <div v-if="props.book">
-            <h3 class="text-lg font-semibold">
-                Add Review for {{ props.book.title }}
+        <div v-if="props.book" class="p-8">
+            <h3 class="text-center text-xl font-semibold">
+                Reviewing "{{ props.book.title }}"
             </h3>
             <form @submit.prevent="onSubmit">
                 <!-- Rating -->

@@ -31,8 +31,8 @@ const onSubmit = () => {
 
 <template>
     <Modal :show="localBook !== null" @close="emits('close')">
-        <div v-if="localBook">
-            <h3 class="text-lg font-semibold">
+        <div v-if="localBook" class="p-8">
+            <h3 class="text-center text-xl font-semibold">
                 {{ localBook.id === 0 ? 'Add New Book' : 'Edit Book' }}
             </h3>
             <form @submit.prevent="onSubmit">
