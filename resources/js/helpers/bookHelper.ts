@@ -1,5 +1,5 @@
-import { Book } from '@/types/book';
 import { getCSRFToken } from '@/helpers/csrfHelper';
+import { Book } from '@/types/book';
 
 export const checkOutBook = async (book: Book): Promise<boolean> => {
     try {
@@ -85,7 +85,7 @@ export const getAllBooks = async (): Promise<Book[]> => {
         console.error('Failed to fetch books:', error);
     }
     return [];
-}
+};
 
 export const submitNewBook = async (book: Book): Promise<boolean> => {
     try {
@@ -109,7 +109,7 @@ export const submitNewBook = async (book: Book): Promise<boolean> => {
         console.error('Error adding book:', error);
     }
     return false;
-}
+};
 
 export const editBook = async (book: Book): Promise<boolean> => {
     try {
@@ -133,4 +133,4 @@ export const editBook = async (book: Book): Promise<boolean> => {
         console.error('Error updating book:', error);
     }
     return false;
-}
+};

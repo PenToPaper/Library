@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import Modal from '@/Components/Modal.vue';
 import { Book } from '@/types/book';
 import { Review } from '@/types/review';
+import { ref, watch } from 'vue';
 
 const props = defineProps<{
     book: Book | null;
@@ -31,7 +31,7 @@ watch(
             localReviewData.value = { ...newVal };
         }
     },
-    { immediate: true }
+    { immediate: true },
 );
 
 const onSubmit = () => {

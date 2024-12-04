@@ -152,8 +152,8 @@ onMounted(async () => {
         <Head title="Dashboard" />
 
         <div class="p-6">
-            <h2 class="text-xl font-semibold leading-tight text-gray-100">
-                Library
+            <h2 class="mb-5 text-xl font-semibold leading-tight text-gray-900">
+                Welcome to the Library
             </h2>
 
             <div v-if="props.userRole === 'librarian'">

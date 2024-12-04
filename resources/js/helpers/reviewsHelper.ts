@@ -78,4 +78,4 @@ export const deleteReview = async (review: Review) => {
         console.error('Error deleting review:', error);
     }
     return false;
-}
+};

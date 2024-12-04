@@ -26,11 +26,16 @@ const emits = defineEmits<{
             <p><strong>Author:</strong> {{ book.author }}</p>
             <p><strong>Description:</strong> {{ book.description }}</p>
             <p><strong>Publisher:</strong> {{ book.publisher }}</p>
-            <p><strong>Publication Date:</strong> {{ book.publication_date }}</p>
+            <p>
+                <strong>Publication Date:</strong> {{ book.publication_date }}
+            </p>
             <p><strong>Category:</strong> {{ book.category }}</p>
             <p><strong>ISBN:</strong> {{ book.isbn }}</p>
             <p><strong>Page Count:</strong> {{ book.page_count }}</p>
-            <p><strong>Is Available:</strong> {{ book.is_available ? 'Yes' : 'No' }}</p>
+            <p>
+                <strong>Is Available:</strong>
+                {{ book.is_available ? 'Yes' : 'No' }}
+            </p>
 
             <!-- Mark Returned Button -->
             <button
