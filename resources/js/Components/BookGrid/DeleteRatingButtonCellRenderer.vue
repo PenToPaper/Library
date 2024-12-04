@@ -2,7 +2,7 @@
     <button
         v-if="hasReview"
         @click="onClick"
-        class="bg-red-500 text-white px-3 rounded hover:bg-red-600"
+        class="rounded bg-red-500 px-3 text-white hover:bg-red-600"
     >
         Delete
     </button>
@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed } from 'vue';
 import type { ICellRendererParams } from 'ag-grid-community';
+import { computed, defineProps } from 'vue';
 
 const props = defineProps<{ params: ICellRendererParams }>();
 

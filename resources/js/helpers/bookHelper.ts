@@ -134,3 +134,11 @@ export const editBook = async (book: Book): Promise<boolean> => {
     }
     return false;
 };
+
+export const submitOrUpdateBook = async (book: Book) => {
+    if (book.id <= 0) {
+        return submitNewBook(book);
+    } else {
+        return editBook(book);
+    }
+};

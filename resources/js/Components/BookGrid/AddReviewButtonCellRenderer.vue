@@ -1,15 +1,15 @@
 <template>
     <button
         @click="onClick"
-        class="bg-green-500 text-white px-3 rounded hover:bg-green-600"
+        class="rounded bg-green-500 px-3 text-white hover:bg-green-600"
     >
         Add Review
     </button>
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
 import type { ICellRendererParams } from 'ag-grid-community';
+import { defineProps } from 'vue';
 
 const props = defineProps<{ params: ICellRendererParams }>();
 

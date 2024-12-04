@@ -3,13 +3,13 @@ import AddEditBookModal from '@/Components/AddEditBookModal.vue';
 import AddEditReviewModal from '@/Components/AddEditReviewModal.vue';
 import BookDetailsModal from '@/Components/BookDetailsModal.vue';
 import BookGrid from '@/Components/BookGrid.vue';
+import TextInput from '@/Components/TextInput.vue';
 import {
     checkOutBook,
     deleteBook,
-    editBook,
     getAllBooks,
     markBookReturned,
-    submitNewBook,
+    submitOrUpdateBook,
 } from '@/helpers/bookHelper';
 import { deleteReview, submitOrUpdateReview } from '@/helpers/reviewsHelper';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -17,7 +17,6 @@ import { Book } from '@/types/book';
 import { Review } from '@/types/review';
 import { Head } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
-import TextInput from '@/Components/TextInput.vue';
 
 const props = defineProps<{
     userRole: string;
@@ -55,16 +54,20 @@ const closeReviewModal = () => {
 
 const onSubmitOrUpdateReview = async (review: Review) => {
     if (await submitOrUpdateReview(review)) {
-        await getAllBooks();
+        await updateBooks();
         closeReviewModal();
     }
 };
 
 const onDeleteReview = async (review: Review) => {
     if (await deleteReview(review)) {
-        await getAllBooks();
+        await updateBooks();
         closeReviewModal();
     }
+};
+
+const updateBooks = async () => {
+    books.value = await getAllBooks();
 };
 
 const openAddEditBookModal = (
@@ -94,31 +97,16 @@ const closeAddEditBookModal = () => {
     addEditBook.value = null;
 };
 
-const onSubmitNewBook = async (book: Book) => {
-    if (await submitNewBook(book)) {
-        await getAllBooks();
-        closeAddEditBookModal();
-    }
-};
-
-const onEditBook = async (book: Book) => {
-    if (await editBook(book)) {
-        await getAllBooks();
-        closeAddEditBookModal();
-    }
-};
-
 const onDeleteBook = async (book: Book) => {
     if (await deleteBook(book)) {
-        await getAllBooks(); // Refresh the book list
+        await updateBooks();
     }
 };
 
-const onSaveBook = (book: Book) => {
-    if (book.id === 0) {
-        submitNewBook(book);
-    } else {
-        editBook(book);
+const onSaveBook = async (book: Book) => {
+    if (await submitOrUpdateBook(book)) {
+        closeAddEditBookModal();
+        await updateBooks();
     }
 };
 
@@ -133,19 +121,19 @@ const closeBookDetailsModal = () => {
 const onMarkBookReturned = async (book: Book) => {
     if (await markBookReturned(book)) {
         closeBookDetailsModal();
-        await getAllBooks();
+        await updateBooks();
     }
 };
 
 const onCheckOutBook = async (book: Book) => {
     if (await checkOutBook(book)) {
         closeBookDetailsModal();
-        await getAllBooks();
+        await updateBooks();
     }
 };
 
-onMounted(async () => {
-    books.value = await getAllBooks();
+onMounted(() => {
+    updateBooks();
 });
 </script>
 
@@ -160,7 +148,7 @@ onMounted(async () => {
 
             <div v-if="props.userRole === 'librarian'">
                 <button
-                    class="rounded bg-green-500 px-4 py-2 text-white"
+                    class="mb-3 rounded bg-green-500 px-4 py-2 text-white"
                     @click="openAddEditBookModal()"
                 >
                     Add Book
