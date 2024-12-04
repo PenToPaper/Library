@@ -24,7 +24,7 @@ const hasReview = computed(() => !!userReview.value);
 
 function onClick() {
     if (confirm('Are you sure you want to delete this review?')) {
-        props.params.context.emits('deleteReview', userReview.value.id);
+        props.params.context.emits('deleteReview', userReview.value);
     }
 }
 </script>

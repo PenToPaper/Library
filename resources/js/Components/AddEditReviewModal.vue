@@ -35,7 +35,10 @@ watch(
 );
 
 const onSubmit = () => {
-    emits('submitReview', localReviewData.value);
+    emits('submitReview', {
+        ...localReviewData.value,
+        book_id: props.book!.id,
+    });
 };
 </script>
 

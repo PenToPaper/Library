@@ -52,17 +52,13 @@ const closeReviewModal = () => {
     reviewBook.value = null;
 };
 
-const onSubmitOrUpdateReview = async (review: Review) => {
-    if (await submitOrUpdateReview(review)) {
+const performActionAndRefresh = async (
+    action: () => Promise<boolean>,
+    onSuccess?: () => void,
+) => {
+    if (await action()) {
         await updateBooks();
-        closeReviewModal();
-    }
-};
-
-const onDeleteReview = async (review: Review) => {
-    if (await deleteReview(review)) {
-        await updateBooks();
-        closeReviewModal();
+        onSuccess?.();
     }
 };
 
@@ -97,19 +93,6 @@ const closeAddEditBookModal = () => {
     addEditBook.value = null;
 };
 
-const onDeleteBook = async (book: Book) => {
-    if (await deleteBook(book)) {
-        await updateBooks();
-    }
-};
-
-const onSaveBook = async (book: Book) => {
-    if (await submitOrUpdateBook(book)) {
-        closeAddEditBookModal();
-        await updateBooks();
-    }
-};
-
 const openBookDetailsModal = (book: Book) => {
     selectedBook.value = book;
 };
@@ -118,23 +101,45 @@ const closeBookDetailsModal = () => {
     selectedBook.value = null;
 };
 
+// Actions
+const onSubmitOrUpdateReview = async (review: Review) => {
+    await performActionAndRefresh(
+        () => submitOrUpdateReview(review),
+        closeReviewModal,
+    );
+};
+
+const onDeleteReview = async (review: Review) => {
+    await performActionAndRefresh(() => deleteReview(review), closeReviewModal);
+};
+
+const onSaveBook = async (book: Book) => {
+    await performActionAndRefresh(
+        () => submitOrUpdateBook(book),
+        closeAddEditBookModal,
+    );
+};
+
+const onDeleteBook = async (book: Book) => {
+    await performActionAndRefresh(() => deleteBook(book));
+};
+
 const onMarkBookReturned = async (book: Book) => {
-    if (await markBookReturned(book)) {
-        closeBookDetailsModal();
-        await updateBooks();
-    }
+    await performActionAndRefresh(
+        () => markBookReturned(book),
+        closeBookDetailsModal,
+    );
 };
 
 const onCheckOutBook = async (book: Book) => {
-    if (await checkOutBook(book)) {
-        closeBookDetailsModal();
-        await updateBooks();
-    }
+    await performActionAndRefresh(
+        () => checkOutBook(book),
+        closeBookDetailsModal,
+    );
 };
 
-onMounted(() => {
-    updateBooks();
-});
+// Initial setup
+onMounted(updateBooks);
 </script>
 
 <template>

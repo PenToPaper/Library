@@ -58,6 +58,7 @@ const columnDefs = ref<ColDef[]>([
             params.value ? 'Yes' : 'No',
         sortable: true,
         filter: true,
+        width: 130,
     },
     {
         headerName: 'Reviews',
@@ -70,6 +71,7 @@ const columnDefs = ref<ColDef[]>([
         },
         sortable: true,
         filter: true,
+        width: 120,
     },
     {
         headerName: 'Actions',

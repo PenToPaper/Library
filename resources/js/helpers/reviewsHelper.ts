@@ -34,6 +34,7 @@ export const insertReview = async (review: Review) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                book_id: review.book_id,
                 message: review.message,
                 rating: review.rating,
             }),
